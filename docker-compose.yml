@@ -1,0 +1,68 @@
+version: '3.7'
+
+services:
+  computronics-api:
+    container_name: computronics-api
+    build:
+      context: ./API
+      dockerfile: dev.Dockerfile
+    command: npm run dev
+    volumes:
+      - ./API/build:/app/build:delegated
+      - ./API/package.json:/app/package.json:delegated
+    environment:
+      PORT: '5000'
+    depends_on:
+      - computronics-api-watch
+      #- computronics-db
+    networks:
+      - computronics
+    ports:
+      - 5000:5000
+
+  computronics-api-watch:
+    build:
+      context: ./API/
+      dockerfile: dev.Dockerfile
+    command: npm run watch
+    volumes:
+      - ./API/src:/app/src:delegated
+      - ./API/build:/app/build:delegated
+      - ./API/.babelrc:/app/.babelrc
+    networks:
+      - computronics
+
+  computronics-ui:
+    build:
+      context: ./UI/
+      dockerfile: dev.Dockerfile
+    environment:
+      REACT_APP_API_HOST: 'localhost'
+      REACT_APP_API_PORT: '5000'
+    command: npm start
+    volumes:
+      - ./UI/src:/app/src:delegated
+      - ./UI/public:/app/public:delegated
+    networks:
+      - computronics
+    ports:
+      - 3000:3000
+    depends_on:
+      - computronics-api
+
+  #computronics-db:
+    #container_name: computronics-db
+    #build:
+      #context: .
+      #dockerfile: mssql/Dockerfile
+    #environment:
+      #ACCEPT_EULA: 'Y'
+      #SA_PASSWORD: 'Test1234'
+    #volumes:
+      #- mssqldata:/var/opt/mssql
+    #networks:
+      #- computronics
+
+networks:
+  computronics:
+    external: true
